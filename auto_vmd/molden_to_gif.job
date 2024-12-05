@@ -1,0 +1,78 @@
+#!/bin/bash -l
+#SBATCH -N 1
+#SBATCH --account=pi-lgagliardi
+#SBATCH --ntasks=4
+#SBATCH -t 00:30:00
+#SBATCH --job-name="molden_to_cube"
+#SBATCH --mem-per-cpu=3G
+#SBATCH -p amd 
+
+# This Job script will run in the current directory, and perform the following:
+# For each .molden file {
+# 		and inside a new subdirectory
+#			Create a .cube file for each orbital in the .molden file (calling PYSCF built-in function)
+# 			Create 36 subdirectories (every 10 degrees of rotation), and pass each of them the .cube files
+#				Convert each .cube file to a .tga using vmd_cube.py
+#				Convert each .tga file to a .png using mogrify (from imagemagick)
+#				Remove .tga and .cube files
+#		Finally, collate the .pngs into a .gif animation at 12 fps
+
+
+### REPLACE THE FOLLOWING LINE WITH THE CONDA ENVIRONMENT WITH PYSCF ###
+mamba activate pyscf
+
+### Change 'MAX_JOBS' to limit the number of bash subprocesses that can be spawned
+### If memory issues appear, then consider lowering this.
+MAX_JOBS=4
+
+ml mkl
+ml vmd
+ml imagemagick
+export VMDPATH=$(which vmd)
+cwd=$(pwd)
+
+cube2png () {
+	mkdir pngs$1 -p &&
+	cp *.cube pngs$1 &&
+	cd pngs$1 &&
+	python3 ../vmd_cube.py --rx 0 --ry $1 --rz 0 --opacity 0.6 --imagew 250 --imageh 250 --scale 1.5 &&
+	vmd < vmd_mo_script.vmd && # the above command doesnt actually run VMD on the compute nodes
+	mogrify -path . -format png *.tga &&
+	rm *.tga &&
+	rm vmd_cube_command &&
+	rm vmd_mo_script.vmd &&
+	rm *.cube && 
+	cd ..
+}
+
+cube2gif () {
+	for r in $(seq 0 10 350)
+	do
+		cube2png $r &
+		while [ $(jobs -p | wc -l) -ge $MAX_JOBS ]; do
+			wait -n
+		done
+	done
+	python3 png2gif.py ./ $1
+}
+
+molden_to_gif () {
+	base_f=$(basename $1)
+	mkdir ${base_f::-7}_img -p
+	cp $1 ${base_f::-7}_img
+	cp ~/joshua/auto_vmd/* ${base_f::-7}_img
+	cd ${base_f::-7}_img	
+	echo "Making cube files from $1"
+	python molden_to_cube.py $f 
+	cube2gif ${base_f}.gif 
+}
+
+for f in $(ls *.molden)
+do
+	molden_to_gif $f &
+	while [ $(jobs -p | wc -l) -ge $MAX_JOBS ]; do
+		wait -n
+	done
+done
+
+echo "All Done!!"
