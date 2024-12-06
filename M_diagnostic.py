@@ -1,6 +1,5 @@
 import re, sys
 import numpy as np
-ifile = sys.argv[1]
 
 def calc_M_diagnostic(n_occ):
     unocc = n_occ[n_occ<=0.25]
@@ -12,14 +11,17 @@ def calc_M_diagnostic(n_occ):
         docc = [2]
     return 0.5 * (2 - min(docc) + sum(np.abs(somo-1)) + max(unocc))
 
-
-with open(ifile, 'r') as f:
-    file_contents = f.read()
-    matches = re.findall(r'Natural occ ([\[\d\. \n]*\])', file_contents, re.MULTILINE)
-    matches = [np.array(group[1:-1].strip().split(), dtype=float) for group in matches]
-    L = {array.tobytes(): array for array in matches}
-    matches = list(L.values())
+def read_nocc_from_outfile(ifile):
+    with open(ifile, 'r') as f:
+        file_contents = f.read()
+        matches = re.findall(r'Natural occ ([\[\d\. \n]*\])', file_contents, re.MULTILINE)
+        matches = [np.array(group[1:-1].strip().split(), dtype=float) for group in matches]
+        L = {array.tobytes(): array for array in matches}
+        matches = list(L.values())
+        return matches
     
+if __name__=='__main__': 
+    matches = read_nocc_from_outfile(sys.argv[1])   
     for group in matches:
-        print(calc_M_diagnostic(group))        
+        print(calc_M_diagnostic(group))     
         
