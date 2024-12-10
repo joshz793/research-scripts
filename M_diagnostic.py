@@ -11,17 +11,23 @@ def calc_M_diagnostic(n_occ):
         docc = [2]
     return 0.5 * (2 - min(docc) + sum(np.abs(somo-1)) + max(unocc))
 
-def read_nocc_from_outfile(ifile):
-    with open(ifile, 'r') as f:
-        file_contents = f.read()
-        matches = re.findall(r'Natural occ ([\[\d\. \n]*\])', file_contents, re.MULTILINE)
-        matches = [np.array(group[1:-1].strip().split(), dtype=float) for group in matches]
-        L = {array.tobytes(): array for array in matches}
-        matches = list(L.values())
-        return matches
+def read_nocc_from_str(string):
+    matches = re.findall(r'Natural occ \[([\d\. e\+\-\n]*)\]', string, re.MULTILINE)
+    matches = [np.array(group.strip().split(), dtype=float) for group in matches]
+    L = {array.tobytes(): array for array in matches}
+    matches = list(L.values())
+    return matches
+    
+def read_S_squared_from_str(string):
+    matches = re.findall(r' S\^2 = ([\-\d\.]*)', string, re.MULTILINE)
+    matches = np.unique([np.array(group.strip(), dtype=float) for group in matches])
+    return matches
     
 if __name__=='__main__': 
-    matches = read_nocc_from_outfile(sys.argv[1])   
-    for group in matches:
-        print(calc_M_diagnostic(group))     
+    with open(sys.argv[1], 'r') as f:
+        file_contents = f.read()
+        matches = read_nocc_from_str(file_contents) 
+        # print(read_S_squared_from_str(file_contents))
+        for group in matches:
+            print(calc_M_diagnostic(group))     
         
