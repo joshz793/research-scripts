@@ -35,7 +35,7 @@ cube2png () {
 	mkdir pngs$1 -p &&
 	cp *.cube pngs$1 &&
 	cd pngs$1 &&
-	python3 ../vmd_cube.py --rx 0 --ry $1 --rz 0 --opacity 0.6 --imagew 250 --imageh 250 --scale 1.5 &&
+	python3 ../vmd_cube.py --iso 0.03 --rx 0 --ry $1 --rz 0 --opacity 0.6 --imagew 250 --imageh 250 --scale 1.5 &&
 	vmd < vmd_mo_script.vmd && # the above command doesnt actually run VMD on the compute nodes
 	mogrify -path . -format png *.tga &&
 	rm *.tga &&
@@ -53,26 +53,29 @@ cube2gif () {
 			wait -n
 		done
 	done
+	wait
 	python3 png2gif.py ./ $1
 }
 
 molden_to_gif () {
+	echo "${@:2}"
 	base_f=$(basename $1)
 	mkdir ${base_f::-7}_img -p
 	cp $1 ${base_f::-7}_img
-	cp ~/joshua/auto_vmd/* ${base_f::-7}_img
+	cp *.py ${base_f::-7}_img
 	cd ${base_f::-7}_img	
 	echo "Making cube files from $1"
-	python molden_to_cube.py $f 
+	python molden_to_cube.py $f ${@:2}
 	cube2gif ${base_f}.gif 
 }
 
 for f in $(ls *.molden)
 do
-	molden_to_gif $f &
+	echo "starting $f"
+	molden_to_gif $f $@ &
 	while [ $(jobs -p | wc -l) -ge $MAX_JOBS ]; do
 		wait -n
 	done
 done
-
+wait
 echo "All Done!!"

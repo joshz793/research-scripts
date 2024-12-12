@@ -1,11 +1,12 @@
 from PIL import Image
-import sys, os
+import sys, os, re
 import numpy as np
 def sort_dir(s):
     return int(s[4:])
 
 def sort_png(s):
-    return int(s.split('.')[0][-1:])
+    
+    return int(re.findall(r"([\d]+)\.png", s)[0])
 
 # png_dir='./pngs/'
 png_dir = sys.argv[1]
