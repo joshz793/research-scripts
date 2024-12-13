@@ -1,0 +1,9 @@
+To use these scripts, move all the files to the directory with all .molden files you wish to visualize.
+
+Open molden_to_gif.job, and make changes where necessary (change parellelization/subprocess options, python environments, vmd settings)
+
+Run on the compute cluster using "sbatch molden_to_gif.job [orbital selection]"
+If no [orbital selection] is given, all orbitals in each .molden file will be rendered.
+[orbital selection] can take the form of integers (ex: 1 2 9 11), sequences (ex: 11-21 15-17) with inclusive endpoints, or any space-separated combination. Only the specified orbitals will be rendered.
+
+The .gif file will have the same name as the respective .molden files.
