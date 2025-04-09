@@ -67,7 +67,7 @@ def combine_pngs(dir : str):
     for idx, im in enumerate(pngs):
         new_im.paste(im, (x_offset,y_offset))
         x_offset = width * int((idx+1)%n_col)
-        y_offset = height * int((idx+1)/n_row)
+        y_offset = height * int((idx+1)%n_row)
     return new_im
 
 def render_gif(imgs, out_file="combined.gif", fps=12):
