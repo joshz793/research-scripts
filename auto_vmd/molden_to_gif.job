@@ -17,7 +17,6 @@
 #				Remove .tga and .cube files
 #		Finally, collate the .pngs into a .gif animation at 12 fps
 
-
 ### REPLACE THE FOLLOWING LINE WITH THE CONDA ENVIRONMENT WITH PYSCF ###
 mamba activate pyscf
 
